@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Mailchimp
   class List
     class Member < Instance
@@ -12,10 +13,13 @@ module Mailchimp
       def self.parse_name_from(data)
         clean_data = data.deep_stringify_keys
         fname, lname = name_parts_from clean_data
+        company, subdomain = name_extra_keys_from clean_data
 
         merge_fields = {}
         merge_fields['FNAME'] = fname if fname
         merge_fields['LNAME'] = lname if lname
+        merge_fields['COMPANY'] = company if company
+        merge_fields['SUBDOMAIN'] = subdomain if subdomain
         additional_data = merge_fields.empty? ? {} : { 'merge_fields' => merge_fields }
 
         additional_data.merge clean_data
@@ -31,6 +35,13 @@ module Mailchimp
         ]
       end
 
+      def self.name_extra_keys_from(data)
+        [
+          data.delete('company'),
+          data.delete('subdomain')
+        ]
+      end
+
       # Instance methods
 
       def first_name
@@ -39,6 +50,14 @@ module Mailchimp
 
       def last_name
         merge_fields['LNAME']
+      end
+
+      def company
+        merge_fields['COMPANY']
+      end
+
+      def subdomain
+        merge_fields['SUBDOMAIN']
       end
 
       def name
@@ -56,7 +75,7 @@ module Mailchimp
     end
 
     class Members < Collection
-      PATH_KEY = DATA_KEY = 'members'.freeze
+      PATH_KEY = DATA_KEY = 'members'
       CHILD_CLASS = Member
 
       def create(data)
